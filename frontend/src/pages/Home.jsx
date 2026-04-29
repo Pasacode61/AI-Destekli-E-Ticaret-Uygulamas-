@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import PersonalRecommendations from '../components/PersonalRecommendations';
 
 export default function Home() {
   const { addToCart } = useCart();
@@ -99,6 +100,9 @@ export default function Home() {
           </Link>
         </div>
       </div>
+
+      {/* AI Personal Recommendations */}
+      <PersonalRecommendations />
     </div>
   );
 }

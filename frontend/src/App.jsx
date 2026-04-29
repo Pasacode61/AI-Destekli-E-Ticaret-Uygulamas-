@@ -9,6 +9,15 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Checkout from './pages/Checkout';
 import MyOrders from './pages/MyOrders';
+<<<<<<< Updated upstream
+=======
+import AdminRoute from './components/AdminRoute';
+import AdminLayout from './pages/admin/AdminLayout';
+import Dashboard from './pages/admin/Dashboard';
+import AdminProducts from './pages/admin/AdminProducts';
+import AdminOrders from './pages/admin/AdminOrders';
+import ChatBot from './components/ChatBot';
+>>>>>>> Stashed changes
 
 function Navbar() {
   const { getCartCount } = useCart();
@@ -94,6 +103,7 @@ function App() {
     <AuthProvider>
       <CartProvider>
         <BrowserRouter>
+<<<<<<< Updated upstream
           <Layout>
             <Routes>
               <Route path="/" element={<Home />} />
@@ -106,6 +116,35 @@ function App() {
               <Route path="/register" element={<Register />} />
             </Routes>
           </Layout>
+=======
+          <Routes>
+            {/* Admin Routes - kendi layout'unu kullanır */}
+            <Route element={<AdminRoute />}>
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="products" element={<AdminProducts />} />
+                <Route path="orders" element={<AdminOrders />} />
+              </Route>
+            </Route>
+
+            {/* Public / User Routes */}
+            <Route path="/*" element={
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/products/:id" element={<ProductDetail />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/my-orders" element={<MyOrders />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                </Routes>
+              </Layout>
+            } />
+          </Routes>
+          <ChatBot />
+>>>>>>> Stashed changes
         </BrowserRouter>
       </CartProvider>
     </AuthProvider>

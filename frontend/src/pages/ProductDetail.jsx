@@ -1,15 +1,22 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useMemo } from 'react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import ProductRecommendations from '../components/ProductRecommendations';
 
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { user } = useAuth();
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [reviews, setReviews] = useState([]);
+  const [reviewText, setReviewText] = useState('');
+  const [reviewPuan, setReviewPuan] = useState(5);
+  const [reviewLoading, setReviewLoading] = useState(false);
 
   // Auction states
   const [currentBid, setCurrentBid] = useState(0);
@@ -31,6 +38,20 @@ export default function ProductDetail() {
       }
     };
     fetchProduct();
+  }, [id]);
+
+  // Fetch reviews
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/reviews/${id}`);
+        const data = await res.json();
+        if (Array.isArray(data)) setReviews(data);
+      } catch (error) {
+        console.error('Yorumlar alınamadı:', error);
+      }
+    };
+    if (id) fetchReviews();
   }, [id]);
 
   // Generate mock price history data based on current price
@@ -63,21 +84,49 @@ export default function ProductDetail() {
     }
   }, [priceHistory]);
 
-  // Mock comments
-  const comments = [
-    { id: 1, user: "Ahmet Y.", date: "12 Haziran 2026", text: "Ürün tek kelimeyle harika, beklentilerimi fazlasıyla karşıladı.", sentiment: "positive", score: 95 },
-    { id: 2, user: "Ayşe K.", date: "05 Haziran 2026", text: "Kargolama biraz yavaştı ama ürünün kalitesi fena değil.", sentiment: "neutral", score: 60 },
-    { id: 3, user: "Mehmet D.", date: "28 Mayıs 2026", text: "Fiyatına göre performansı inanılmaz iyi, kesinlikle tavsiye ederim.", sentiment: "positive", score: 88 },
-  ];
+  const getSentimentIcon = (score) => {
+    if (score >= 60) return <span className="text-2xl" title="Pozitif">😊</span>;
+    if (score <= 40) return <span className="text-2xl" title="Negatif">😡</span>;
+    return <span className="text-2xl" title="Nötr">😐</span>;
+  };
 
-  const getSentimentIcon = (sentiment) => {
-    switch (sentiment) {
-      case 'positive': return <span className="text-2xl" title="Pozitif">😊</span>;
-      case 'neutral': return <span className="text-2xl" title="Nötr">😐</span>;
-      case 'negative': return <span className="text-2xl" title="Negatif">😡</span>;
-      default: return null;
+  const getSentimentColor = (score) => {
+    if (score >= 60) return 'bg-green-100 text-green-700';
+    if (score <= 40) return 'bg-red-100 text-red-700';
+    return 'bg-yellow-100 text-yellow-700';
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!reviewText.trim()) return;
+    setReviewLoading(true);
+    try {
+      const res = await fetch(`http://localhost:5000/api/reviews/${id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.token}`
+        },
+        body: JSON.stringify({ puan: reviewPuan, yorumMetni: reviewText })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setReviews(prev => [data, ...prev]);
+        setReviewText('');
+        setReviewPuan(5);
+      } else {
+        alert(data.message || 'Yorum gönderilemedi');
+      }
+    } catch (error) {
+      alert('Yorum gönderilirken hata oluştu');
+    } finally {
+      setReviewLoading(false);
     }
   };
+
+  const avgScore = reviews.length > 0 
+    ? Math.round(reviews.reduce((acc, r) => acc + r.duyguSkoru, 0) / reviews.length) 
+    : 0;
 
   useEffect(() => {
     if (!product?.acikArtirmadaMi) return;
@@ -311,46 +360,77 @@ export default function ProductDetail() {
           Değerlendirmeler & Duygu Analizi
         </h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {/* Global Sentiment Summary */}
           <div className="col-span-1 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-8 text-white flex flex-col justify-center items-center text-center shadow-lg">
-            <div className="text-6xl mb-4">😊</div>
-            <div className="text-4xl font-black mb-2">92/100</div>
+            <div className="text-6xl mb-4">{avgScore >= 60 ? '😊' : avgScore <= 40 ? '😡' : '😐'}</div>
+            <div className="text-4xl font-black mb-2">{reviews.length > 0 ? `${avgScore}/100` : '-'}</div>
             <h3 className="text-xl font-bold mb-2">Genel Duygu Skoru</h3>
             <p className="text-indigo-100">
-              Yapay zeka algoritmamız bu ürün için yapılan tüm yorumları analiz etti ve genel müşteri memnuniyetinin <strong>çok yüksek</strong> olduğunu belirledi.
+              {reviews.length > 0 
+                ? `Yapay zeka algoritmamız ${reviews.length} yorumu analiz etti.`
+                : 'Henüz yorum yapılmamış. İlk yorumu siz yapın!'
+              }
             </p>
           </div>
 
-          {/* Comments List */}
+          {/* Comments List + Form */}
           <div className="col-span-1 md:col-span-2 flex flex-col gap-4">
-            {comments.map((comment) => (
-              <div key={comment.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex gap-4">
+            {/* Review Form */}
+            {user ? (
+              <form onSubmit={handleReviewSubmit} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <h4 className="font-bold text-gray-900 mb-4">Yorum Yapın</h4>
+                <div className="flex items-center gap-2 mb-3">
+                  <label className="text-sm font-medium text-gray-600">Puan:</label>
+                  {[1,2,3,4,5].map(n => (
+                    <button key={n} type="button" onClick={() => setReviewPuan(n)}
+                      className={`text-2xl transition-transform ${n <= reviewPuan ? 'scale-110' : 'opacity-30'}`}
+                    >{'⭐'}</button>
+                  ))}
+                </div>
+                <textarea rows="3" value={reviewText} onChange={(e) => setReviewText(e.target.value)}
+                  placeholder="Bu ürün hakkında ne düşünüyorsunuz?"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-indigo-500 focus:border-indigo-500 outline-none mb-3"
+                  required />
+                <button type="submit" disabled={reviewLoading}
+                  className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-medium text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50">
+                  {reviewLoading ? 'Gönderiliyor...' : 'Yorum Gönder'}
+                </button>
+              </form>
+            ) : (
+              <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 text-center">
+                <p className="text-gray-500">Yorum yapmak için <Link to="/login" className="text-indigo-600 font-bold hover:underline">giriş yapın</Link>.</p>
+              </div>
+            )}
+
+            {reviews.map((review) => (
+              <div key={review._id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex gap-4">
                 <div className="flex-shrink-0 flex flex-col items-center justify-start gap-1">
-                  {getSentimentIcon(comment.sentiment)}
-                  <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                    comment.sentiment === 'positive' ? 'bg-green-100 text-green-700' : 
-                    comment.sentiment === 'neutral' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
-                  }`}>
-                    Skor: {comment.score}
+                  {getSentimentIcon(review.duyguSkoru)}
+                  <span className={`text-xs font-bold px-2 py-1 rounded-full ${getSentimentColor(review.duyguSkoru)}`}>
+                    Skor: {review.duyguSkoru}
                   </span>
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <h4 className="font-bold text-gray-900">{comment.user}</h4>
-                    <span className="text-sm text-gray-400">• {comment.date}</span>
+                    <h4 className="font-bold text-gray-900">{review.kullanici?.adSoyad || 'Anonim'}</h4>
+                    <span className="text-sm text-gray-400">• {new Date(review.createdAt).toLocaleDateString('tr-TR')}</span>
+                    <span className="text-sm text-yellow-500">{'⭐'.repeat(review.puan)}</span>
                   </div>
-                  <p className="text-gray-600 leading-relaxed">{comment.text}</p>
+                  <p className="text-gray-600 leading-relaxed">{review.yorumMetni}</p>
                 </div>
               </div>
             ))}
-            
-            <button className="mt-2 text-indigo-600 font-bold hover:text-indigo-800 transition-colors py-2 px-4 rounded-xl hover:bg-indigo-50 self-start">
-              Tüm Yorumları Gör (128) &rarr;
-            </button>
+
+            {reviews.length === 0 && (
+              <p className="text-gray-400 text-center py-4">Henüz yorum yok.</p>
+            )}
           </div>
         </div>
       </div>
+
+      {/* AI Product Recommendations */}
+      <ProductRecommendations productId={id} />
     </div>
   );
 }
