@@ -9,15 +9,12 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Checkout from './pages/Checkout';
 import MyOrders from './pages/MyOrders';
-<<<<<<< Updated upstream
-=======
 import AdminRoute from './components/AdminRoute';
 import AdminLayout from './pages/admin/AdminLayout';
 import Dashboard from './pages/admin/Dashboard';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
 import ChatBot from './components/ChatBot';
->>>>>>> Stashed changes
 
 function Navbar() {
   const { getCartCount } = useCart();
@@ -57,11 +54,16 @@ function Navbar() {
                 <Link to="/my-orders" className="text-sm font-bold text-gray-700 hover:text-indigo-600 transition-colors">
                   Siparişlerim
                 </Link>
+                {user.rol === 'admin' && (
+                  <Link to="/admin" className="text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">
+                    Admin Paneli
+                  </Link>
+                )}
                 <span className="text-sm font-medium text-gray-400 hidden sm:block">|</span>
                 <span className="text-sm font-medium text-gray-700 hidden sm:block">
                   Hoş geldin, {user.adSoyad.split(' ')[0]}
                 </span>
-                <button 
+                <button
                   onClick={logout}
                   className="text-red-600 bg-red-50 hover:bg-red-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
@@ -103,20 +105,6 @@ function App() {
     <AuthProvider>
       <CartProvider>
         <BrowserRouter>
-<<<<<<< Updated upstream
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/products/:id" element={<ProductDetail />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/my-orders" element={<MyOrders />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-            </Routes>
-          </Layout>
-=======
           <Routes>
             {/* Admin Routes - kendi layout'unu kullanır */}
             <Route element={<AdminRoute />}>
@@ -144,7 +132,6 @@ function App() {
             } />
           </Routes>
           <ChatBot />
->>>>>>> Stashed changes
         </BrowserRouter>
       </CartProvider>
     </AuthProvider>

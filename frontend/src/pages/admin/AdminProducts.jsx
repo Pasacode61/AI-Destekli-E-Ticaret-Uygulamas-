@@ -1,0 +1,230 @@
+import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
+
+export default function AdminProducts() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [formData, setFormData] = useState({
+    isim: '', fiyat: '', aciklama: '', kategori: '', resimUrl: '', stokSayisi: '', acikArtirmadaMi: false
+  });
+  const { user } = useAuth();
+
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/products');
+      const data = await res.json();
+      setProducts(data);
+    } catch (error) {
+      console.error('Ürünler alınamadı:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchProducts(); }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Bu ürünü silmek istediğinize emin misiniz?')) return;
+    try {
+      await fetch(`http://localhost:5000/api/products/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      setProducts(prev => prev.filter(p => p._id !== id));
+    } catch (error) {
+      alert('Silme işlemi başarısız: ' + error.message);
+    }
+  };
+
+  const handleCreate = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.token}`
+        }
+      });
+      const newProduct = await res.json();
+      setEditingProduct(newProduct._id);
+      setFormData({
+        isim: newProduct.isim,
+        fiyat: newProduct.fiyat,
+        aciklama: newProduct.aciklama,
+        kategori: newProduct.kategori,
+        resimUrl: newProduct.resimUrl,
+        stokSayisi: newProduct.stokSayisi,
+        acikArtirmadaMi: newProduct.acikArtirmadaMi
+      });
+      setProducts(prev => [newProduct, ...prev]);
+    } catch (error) {
+      alert('Ürün oluşturulamadı: ' + error.message);
+    }
+  };
+
+  const handleEditClick = (product) => {
+    setEditingProduct(product._id);
+    setFormData({
+      isim: product.isim,
+      fiyat: product.fiyat,
+      aciklama: product.aciklama || '',
+      kategori: product.kategori,
+      resimUrl: product.resimUrl,
+      stokSayisi: product.stokSayisi,
+      acikArtirmadaMi: product.acikArtirmadaMi
+    });
+  };
+
+  const handleUpdate = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/products/${editingProduct}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.token}`
+        },
+        body: JSON.stringify({
+          ...formData,
+          fiyat: Number(formData.fiyat),
+          stokSayisi: Number(formData.stokSayisi)
+        })
+      });
+      const updatedProduct = await res.json();
+      setProducts(prev => prev.map(p => p._id === updatedProduct._id ? updatedProduct : p));
+      setEditingProduct(null);
+    } catch (error) {
+      alert('Güncelleme başarısız: ' + error.message);
+    }
+  };
+
+  if (loading) return <div className="text-center py-10">Yükleniyor...</div>;
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">Ürün Yönetimi</h1>
+        <button
+          onClick={handleCreate}
+          className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          Yeni Ürün Ekle
+        </button>
+      </div>
+
+      {/* Edit Modal */}
+      {editingProduct && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+            <h2 className="text-xl font-bold mb-6">Ürünü Düzenle</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ürün İsmi</label>
+                <input type="text" value={formData.isim} onChange={(e) => setFormData({...formData, isim: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Fiyat (₺)</label>
+                  <input type="number" value={formData.fiyat} onChange={(e) => setFormData({...formData, fiyat: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Stok</label>
+                  <input type="number" value={formData.stokSayisi} onChange={(e) => setFormData({...formData, stokSayisi: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                <input type="text" value={formData.kategori} onChange={(e) => setFormData({...formData, kategori: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Resim URL</label>
+                <input type="text" value={formData.resimUrl} onChange={(e) => setFormData({...formData, resimUrl: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Açıklama</label>
+                <textarea rows="3" value={formData.aciklama} onChange={(e) => setFormData({...formData, aciklama: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="acikArtirma" checked={formData.acikArtirmadaMi} onChange={(e) => setFormData({...formData, acikArtirmadaMi: e.target.checked})}
+                  className="h-4 w-4 text-indigo-600 rounded" />
+                <label htmlFor="acikArtirma" className="text-sm font-medium text-gray-700">Açık Artırmada</label>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-8">
+              <button onClick={handleUpdate} className="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700 transition-colors">
+                Kaydet
+              </button>
+              <button onClick={() => setEditingProduct(null)} className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-200 transition-colors">
+                İptal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Products Table */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-100">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Ürün</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Kategori</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Fiyat</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Stok</th>
+                <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {products.map((product) => (
+                <tr key={product._id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-4">
+                      <img src={product.resimUrl} alt={product.isim} className="w-12 h-12 rounded-lg object-cover bg-gray-100" />
+                      <div>
+                        <p className="font-semibold text-gray-900 line-clamp-1">{product.isim}</p>
+                        {product.acikArtirmadaMi && (
+                          <span className="text-xs text-orange-600 font-bold">🔥 Açık Artırmada</span>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="bg-indigo-50 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full">{product.kategori}</span>
+                  </td>
+                  <td className="px-6 py-4 font-bold text-gray-900">{product.fiyat.toLocaleString('tr-TR')} ₺</td>
+                  <td className="px-6 py-4">
+                    <span className={`font-bold ${product.stokSayisi > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                      {product.stokSayisi}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => handleEditClick(product)}
+                        className="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-2 rounded-lg text-sm font-medium transition-colors">
+                        Düzenle
+                      </button>
+                      <button onClick={() => handleDelete(product._id)}
+                        className="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-2 rounded-lg text-sm font-medium transition-colors">
+                        Sil
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
