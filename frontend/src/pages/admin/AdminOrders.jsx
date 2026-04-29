@@ -64,6 +64,7 @@ export default function AdminOrders() {
         <div className="space-y-6">
           {orders.map((order) => (
             <div key={order._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              {/* Header */}
               <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
                 <div className="flex items-center gap-6">
                   <div>
@@ -101,6 +102,7 @@ export default function AdminOrders() {
                 </div>
               </div>
 
+              {/* Items */}
               <div className="p-6">
                 <div className="space-y-3">
                   {order.siparisKalemleri.map((item, idx) => (
