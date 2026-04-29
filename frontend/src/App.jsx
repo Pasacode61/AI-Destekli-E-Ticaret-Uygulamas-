@@ -9,6 +9,11 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Checkout from './pages/Checkout';
 import MyOrders from './pages/MyOrders';
+import AdminRoute from './components/AdminRoute';
+import AdminLayout from './pages/admin/AdminLayout';
+import Dashboard from './pages/admin/Dashboard';
+import AdminProducts from './pages/admin/AdminProducts';
+import AdminOrders from './pages/admin/AdminOrders';
 
 function Navbar() {
   const { getCartCount } = useCart();
@@ -48,6 +53,11 @@ function Navbar() {
                 <Link to="/my-orders" className="text-sm font-bold text-gray-700 hover:text-indigo-600 transition-colors">
                   Siparişlerim
                 </Link>
+                {user.rol === 'admin' && (
+                  <Link to="/admin" className="text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">
+                    Admin Paneli
+                  </Link>
+                )}
                 <span className="text-sm font-medium text-gray-400 hidden sm:block">|</span>
                 <span className="text-sm font-medium text-gray-700 hidden sm:block">
                   Hoş geldin, {user.adSoyad.split(' ')[0]}
@@ -94,18 +104,32 @@ function App() {
     <AuthProvider>
       <CartProvider>
         <BrowserRouter>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/products/:id" element={<ProductDetail />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/my-orders" element={<MyOrders />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-            </Routes>
-          </Layout>
+          <Routes>
+            {/* Admin Routes - kendi layout'unu kullanır */}
+            <Route element={<AdminRoute />}>
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="products" element={<AdminProducts />} />
+                <Route path="orders" element={<AdminOrders />} />
+              </Route>
+            </Route>
+
+            {/* Public / User Routes */}
+            <Route path="/*" element={
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/products/:id" element={<ProductDetail />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/my-orders" element={<MyOrders />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                </Routes>
+              </Layout>
+            } />
+          </Routes>
         </BrowserRouter>
       </CartProvider>
     </AuthProvider>
