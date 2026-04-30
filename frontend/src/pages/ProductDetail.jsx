@@ -26,7 +26,7 @@ export default function ProductDetail() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/products/${id}`);
+        const response = await fetch(`http://localhost:5001/api/products/${id}`);
         if (!response.ok) throw new Error('Ürün bulunamadı');
         const data = await response.json();
         setProduct(data);
@@ -44,7 +44,7 @@ export default function ProductDetail() {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/reviews/${id}`);
+        const res = await fetch(`http://localhost:5001/api/reviews/${id}`);
         const data = await res.json();
         if (Array.isArray(data)) setReviews(data);
       } catch (error) {
@@ -101,7 +101,7 @@ export default function ProductDetail() {
     if (!reviewText.trim()) return;
     setReviewLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/reviews/${id}`, {
+      const res = await fetch(`http://localhost:5001/api/reviews/${id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

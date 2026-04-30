@@ -8,7 +8,7 @@ export default function ProductRecommendations({ productId }) {
     if (!productId) return;
     const fetchRecommendations = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/recommendations/${productId}`);
+        const res = await fetch(`http://localhost:5001/api/recommendations/${productId}`);
         const data = await res.json();
         setRecommendations(data);
       } catch (error) {

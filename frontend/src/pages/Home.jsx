@@ -11,7 +11,7 @@ export default function Home() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/products');
+        const response = await fetch('http://localhost:5001/api/products');
         const data = await response.json();
         setFeaturedProducts(data.slice(0, 4));
         setLoading(false);

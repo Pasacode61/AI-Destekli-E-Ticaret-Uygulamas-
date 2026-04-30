@@ -10,8 +10,8 @@ export default function Dashboard() {
     const fetchStats = async () => {
       try {
         const [productsRes, ordersRes] = await Promise.all([
-          fetch('http://localhost:5000/api/products'),
-          fetch('http://localhost:5000/api/orders', {
+          fetch('http://localhost:5001/api/products'),
+          fetch('http://localhost:5001/api/orders', {
             headers: { Authorization: `Bearer ${user.token}` }
           })
         ]);

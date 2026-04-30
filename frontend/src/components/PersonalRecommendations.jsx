@@ -12,7 +12,7 @@ export default function PersonalRecommendations() {
 
     const fetchPersonal = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/recommendations/personal', {
+        const res = await fetch('http://localhost:5001/api/recommendations/personal', {
           headers: { Authorization: `Bearer ${user.token}` }
         });
         const data = await res.json();

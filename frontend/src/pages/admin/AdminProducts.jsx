@@ -12,7 +12,7 @@ export default function AdminProducts() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/products');
+      const res = await fetch('http://localhost:5001/api/products');
       const data = await res.json();
       setProducts(data);
     } catch (error) {
@@ -27,7 +27,7 @@ export default function AdminProducts() {
   const handleDelete = async (id) => {
     if (!window.confirm('Bu ürünü silmek istediğinize emin misiniz?')) return;
     try {
-      await fetch(`http://localhost:5000/api/products/${id}`, {
+      await fetch(`http://localhost:5001/api/products/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${user.token}` }
       });
@@ -39,7 +39,7 @@ export default function AdminProducts() {
 
   const handleCreate = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/products', {
+      const res = await fetch('http://localhost:5001/api/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -78,7 +78,7 @@ export default function AdminProducts() {
 
   const handleUpdate = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/products/${editingProduct}`, {
+      const res = await fetch(`http://localhost:5001/api/products/${editingProduct}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

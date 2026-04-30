@@ -9,7 +9,7 @@ export default function AdminOrders() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/orders', {
+        const res = await fetch('http://localhost:5001/api/orders', {
           headers: { Authorization: `Bearer ${user.token}` }
         });
         const data = await res.json();
@@ -25,7 +25,7 @@ export default function AdminOrders() {
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/${orderId}/deliver`, {
+      const res = await fetch(`http://localhost:5001/api/orders/${orderId}/deliver`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

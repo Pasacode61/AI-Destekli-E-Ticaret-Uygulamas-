@@ -29,7 +29,7 @@ export default function ChatBot() {
       const headers = { 'Content-Type': 'application/json' };
       if (user) headers.Authorization = `Bearer ${user.token}`;
 
-      const res = await fetch('http://localhost:5000/api/chatbot', {
+      const res = await fetch('http://localhost:5001/api/chatbot', {
         method: 'POST',
         headers,
         body: JSON.stringify({ message: userMessage })
