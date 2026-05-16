@@ -33,13 +33,30 @@ export const chat = async (req, res) => {
       const lowerMsg = message.toLowerCase();
       
       // Ürün arama simülasyonu
-      const aramaAnahtar = ['arıyorum', 'istiyorum', 'öner', 'bak', 'ara', 'var mı', 'göster', 'laptop', 'telefon', 'kulaklık', 'ürün', 'indirim'];
+      const aramaAnahtar = ['arıyorum', 'istiyorum', 'öner', 'bak', 'ara', 'var mı', 'göster', 'laptop', 'telefon', 'kulaklık', 'ürün', 'indirim', 'saat', 'tablo', 'ayakkabı', 'kamera', 'farklı', 'ne var'];
       const isProductSearch = aramaAnahtar.some(k => lowerMsg.includes(k));
 
-      if (isProductSearch) {
-        const matchedProducts = await Product.find({}).limit(4);
+      if (isProductSearch) { 
+        const kelimeler = message.split(' ').filter(w => w.length > 2);
+        let query = {};
+        
+        if (kelimeler.length > 0 && !lowerMsg.includes('öner') && !lowerMsg.includes('indirim') && !lowerMsg.includes('farklı')) {
+          query = {
+            $or: [
+              { isim: { $regex: kelimeler.join('|'), $options: 'i' } },
+              { kategori: { $regex: kelimeler.join('|'), $options: 'i' } }
+            ]
+          };
+        }
+
+        // Eğer spesifik kelime eşleşmesi bulamazsa veya genel 'öner' / 'indirim' dendiyse rastgele 4 ürün getir ($sample)
+        let matchedProducts = await Product.find(query).limit(4);
+        if (matchedProducts.length === 0 || lowerMsg.includes('öner') || lowerMsg.includes('indirim') || lowerMsg.includes('farklı')) {
+          matchedProducts = await Product.aggregate([{ $sample: { size: 4 } }]);
+        }
+
         return res.json({
-          reply: "🤖 (Nexia AI Asistan) Tabii ki! Size özel en popüler ve indirim fırsatı sunan ürünlerimizi aşağıda listeledim. İncelemek istediğiniz ürünün kartına tıklayabilirsiniz:",
+          reply: "🤖 (Nexia AI Asistan) İsteğinize özel mağazamızın en dikkat çeken fırsatlarını belirledim. İşte sizin için seçtiğim dinamik ürünler:",
           type: "products",
           products: matchedProducts.map(p => ({
             _id: p._id,
