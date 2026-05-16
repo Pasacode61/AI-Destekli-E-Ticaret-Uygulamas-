@@ -81,10 +81,10 @@ export default function Checkout() {
 
       // 3. Siparişi Oluştur
       const orderData = {
-        // Backend'de "miktar" kullanılıyordu (item.quantity), orderController'da item.miktar aranıyor:
         siparisKalemleri: cartItems.map(item => ({
           isim: item.isim,
           miktar: item.quantity,
+          adet: item.quantity, // Mongoose modelindeki adet alanını doğrulamak için
           resimUrl: item.resimUrl,
           fiyat: item.fiyat,
           urun: item._id
