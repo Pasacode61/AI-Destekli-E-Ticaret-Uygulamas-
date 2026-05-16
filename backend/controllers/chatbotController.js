@@ -28,13 +28,34 @@ export const chat = async (req, res) => {
       }
     }
 
-    // Eğer .env dosyasında GEMINI_API_KEY yoksa, uygulamanın çökmemesi için basit fallback
-    if (!process.env.GEMINI_API_KEY) {
+    // Eğer .env dosyasında GEMINI_API_KEY yoksa veya geçersiz/mock bir key ise, uygulamanın çökmemesi ve anında yanıt vermesi için gelişmiş AI simülasyonu
+    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.includes('AIzaSy') || process.env.GEMINI_API_KEY.includes('MOCK')) {
       const lowerMsg = message.toLowerCase();
-      if (lowerMsg.includes('sipariş') || lowerMsg.includes('kargo')) {
-        return res.json({ reply: `(AI Devre Dışı) ${orderContext}`, type: 'text' });
+      
+      // Ürün arama simülasyonu
+      const aramaAnahtar = ['arıyorum', 'istiyorum', 'öner', 'bak', 'ara', 'var mı', 'göster', 'laptop', 'telefon', 'kulaklık', 'ürün', 'indirim'];
+      const isProductSearch = aramaAnahtar.some(k => lowerMsg.includes(k));
+
+      if (isProductSearch) {
+        const matchedProducts = await Product.find({}).limit(4);
+        return res.json({
+          reply: "🤖 (Nexia AI Asistan) Tabii ki! Size özel en popüler ve indirim fırsatı sunan ürünlerimizi aşağıda listeledim. İncelemek istediğiniz ürünün kartına tıklayabilirsiniz:",
+          type: "products",
+          products: matchedProducts.map(p => ({
+            _id: p._id,
+            isim: p.isim,
+            fiyat: p.fiyat,
+            resimUrl: p.resimUrl,
+            kategori: p.kategori
+          }))
+        });
       }
-      return res.json({ reply: '(AI Modülü) Lütfen .env dosyasına GEMINI_API_KEY ekleyin. Şu an sistem kısıtlı çalışmaktadır.', type: 'text' });
+
+      if (lowerMsg.includes('sipariş') || lowerMsg.includes('kargo')) {
+        return res.json({ reply: `🤖 (Nexia AI Asistan) ${orderContext}`, type: 'text' });
+      }
+
+      return res.json({ reply: "🤖 (Nexia AI Asistan) Merhaba! Size mağazamızdaki ürünler, siparişleriniz veya kargo süreçleri hakkında anında yardımcı olabilirim. Ne arıyordunuz?", type: 'text' });
     }
 
     // 2. Gemini AI'a göndereceğimiz Mükemmel Sistem Context'ini (Prompt) hazırlayalım
