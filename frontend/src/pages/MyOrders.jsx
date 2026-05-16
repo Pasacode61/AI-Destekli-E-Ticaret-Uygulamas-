@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 const orderSteps = [
   { label: 'Sipariş Alındı', status: ['Hazırlanıyor', 'Kargolandı', 'Kargoda', 'Teslim Edildi'] },
@@ -107,7 +107,7 @@ export default function MyOrders() {
         ];
       });
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: 85,
         head: [['#', 'Urun Ismi', 'Adet', 'Birim Fiyat', 'Toplam']],
         body: tableData,
