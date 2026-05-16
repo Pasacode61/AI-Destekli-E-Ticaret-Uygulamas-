@@ -124,13 +124,14 @@ export default function MyOrders() {
       });
 
       // Toplam Tutar Hesaplama ve Gösterme
-      const finalY = doc.lastAutoTable.finalY + 15;
+      const finalY = 85 + (tableData.length * 10) + 20;
+      const toplam = order.toplamTutar || 0;
       doc.setFontSize(12);
       doc.setTextColor(30, 30, 30);
-      doc.text(`Ara Toplam: ${order.toplamTutar.toLocaleString('tr-TR')} TL`, 130, finalY, { align: 'left' });
+      doc.text(`Ara Toplam: ${toplam.toLocaleString('tr-TR')} TL`, 130, finalY, { align: 'left' });
       doc.text("Kargo Ucreti: 0 TL (Ucretsiz)", 130, finalY + 7, { align: 'left' });
       doc.setFontSize(14); doc.setTextColor(79, 70, 229);
-      doc.text(`GENEL TOPLAM: ${order.toplamTutar.toLocaleString('tr-TR')} TL`, 130, finalY + 16, { align: 'left' });
+      doc.text(`GENEL TOPLAM: ${toplam.toLocaleString('tr-TR')} TL`, 130, finalY + 16, { align: 'left' });
 
       // Dipnot
       doc.setFontSize(9);
