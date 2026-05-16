@@ -96,13 +96,16 @@ export default function MyOrders() {
       doc.text(`Teslimat Adresi: ${cleanText(order.kargoAdresi || '')}`, 14, 76);
 
       // Kalemler Tablosu
-      const tableData = order.siparisKalemleri.map((item, idx) => [
-        idx + 1,
-        cleanText(item.isim),
-        item.adet,
-        `${item.fiyat.toLocaleString('tr-TR')} TL`,
-        `${(item.fiyat * item.adet).toLocaleString('tr-TR')} TL`
-      ]);
+      const tableData = order.siparisKalemleri.map((item, idx) => {
+        const miktar = item.adet || item.miktar || 1;
+        return [
+          idx + 1,
+          cleanText(item.isim || 'Urun'),
+          miktar,
+          `${(item.fiyat || 0).toLocaleString('tr-TR')} TL`,
+          `${((item.fiyat || 0) * miktar).toLocaleString('tr-TR')} TL`
+        ];
+      });
 
       doc.autoTable({
         startY: 85,
@@ -236,20 +239,23 @@ export default function MyOrders() {
                 {/* Sipariş Kalemleri */}
                 <div className="space-y-4 mb-8">
                   <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Sipariş İçeriği</h4>
-                  {order.siparisKalemleri.map((item, index) => (
-                    <div key={index} className="flex items-center gap-6 bg-gray-50/50 p-4 rounded-2xl border border-gray-100/80">
-                      <img src={item.resimUrl} alt={item.isim} className="w-16 h-16 rounded-xl object-cover bg-gray-100 shadow-sm" />
-                      <div className="flex-1">
-                        <Link to={`/products/${item.urun}`} className="font-bold text-gray-900 hover:text-indigo-600 text-base transition-colors">
-                          {item.isim}
-                        </Link>
-                        <p className="text-gray-500 font-medium text-sm mt-0.5">{item.adet} adet x {item.fiyat.toLocaleString('tr-TR')} ₺</p>
+                  {order.siparisKalemleri.map((item, index) => {
+                    const miktar = item.adet || item.miktar || 1;
+                    return (
+                      <div key={index} className="flex items-center gap-6 bg-gray-50/50 p-4 rounded-2xl border border-gray-100/80">
+                        <img src={item.resimUrl} alt={item.isim} className="w-16 h-16 rounded-xl object-cover bg-gray-100 shadow-sm" />
+                        <div className="flex-1">
+                          <Link to={`/products/${item.urun}`} className="font-bold text-gray-900 hover:text-indigo-600 text-base transition-colors">
+                            {item.isim}
+                          </Link>
+                          <p className="text-gray-500 font-medium text-sm mt-0.5">{miktar} adet x {(item.fiyat || 0).toLocaleString('tr-TR')} ₺</p>
+                        </div>
+                        <div className="font-extrabold text-gray-900 text-lg">
+                          {((item.fiyat || 0) * miktar).toLocaleString('tr-TR')} ₺
+                        </div>
                       </div>
-                      <div className="font-extrabold text-gray-900 text-lg">
-                        {(item.fiyat * item.adet).toLocaleString('tr-TR')} ₺
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Teslimat Adresi */}
