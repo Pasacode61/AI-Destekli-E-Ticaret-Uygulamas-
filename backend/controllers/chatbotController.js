@@ -33,30 +33,35 @@ export const chat = async (req, res) => {
       const lowerMsg = message.toLowerCase();
       
       // Ürün arama simülasyonu
-      const aramaAnahtar = ['arıyorum', 'istiyorum', 'öner', 'bak', 'ara', 'var mı', 'göster', 'laptop', 'telefon', 'kulaklık', 'ürün', 'indirim', 'saat', 'tablo', 'ayakkabı', 'kamera', 'farklı', 'ne var'];
+      const aramaAnahtar = ['arıyorum', 'istiyorum', 'öner', 'bak', 'ara', 'var mı', 'göster', 'laptop', 'telefon', 'kulaklık', 'ürün', 'indirim', 'saat', 'tablo', 'ayakkabı', 'kamera', 'farklı', 'ne var', 'klavye', 'mouse'];
       const isProductSearch = aramaAnahtar.some(k => lowerMsg.includes(k));
 
-      if (isProductSearch) { 
-        const kelimeler = message.split(' ').filter(w => w.length > 2);
-        let query = {};
-        
-        if (kelimeler.length > 0 && !lowerMsg.includes('öner') && !lowerMsg.includes('indirim') && !lowerMsg.includes('farklı')) {
-          query = {
+      if (isProductSearch) {
+        // Spesifik kategori veya ürün adı arıyor mu kontrol et
+        const spesifikKelimeler = ['laptop', 'telefon', 'kulaklık', 'saat', 'tablo', 'ayakkabı', 'kamera', 'klavye', 'mouse', 'ekran', 'oyuncu', 'akıllı'];
+        const bulunanSpesifikler = spesifikKelimeler.filter(kelime => lowerMsg.includes(kelime));
+
+        let matchedProducts = [];
+
+        if (bulunanSpesifikler.length > 0) {
+          // Bulunan spesifik kelimelere göre arama yap
+          matchedProducts = await Product.find({
             $or: [
-              { isim: { $regex: kelimeler.join('|'), $options: 'i' } },
-              { kategori: { $regex: kelimeler.join('|'), $options: 'i' } }
+              { isim: { $regex: bulunanSpesifikler.join('|'), $options: 'i' } },
+              { kategori: { $regex: bulunanSpesifikler.join('|'), $options: 'i' } }
             ]
-          };
+          }).limit(4);
         }
 
-        // Eğer spesifik kelime eşleşmesi bulamazsa veya genel 'öner' / 'indirim' dendiyse rastgele 4 ürün getir ($sample)
-        let matchedProducts = await Product.find(query).limit(4);
-        if (matchedProducts.length === 0 || lowerMsg.includes('öner') || lowerMsg.includes('indirim') || lowerMsg.includes('farklı')) {
+        // Eğer spesifik kelime yoksa (sadece 'öner', 'indirim', 'farklı' dendiyse) veya sonuç bulunamadıysa rastgele getir
+        if (matchedProducts.length === 0) {
           matchedProducts = await Product.aggregate([{ $sample: { size: 4 } }]);
         }
 
         return res.json({
-          reply: "🤖 (Nexia AI Asistan) İsteğinize özel mağazamızın en dikkat çeken fırsatlarını belirledim. İşte sizin için seçtiğim dinamik ürünler:",
+          reply: bulunanSpesifikler.length > 0 
+            ? `🤖 (Nexia AI Asistan) "${bulunanSpesifikler.join(', ')}" aramanıza özel mağazamızın en popüler ürünlerini aşağıda listeledim:` 
+            : "🤖 (Nexia AI Asistan) İsteğinize özel mağazamızın en dikkat çeken fırsatlarını belirledim. İşte sizin için seçtiğim dinamik ürünler:",
           type: "products",
           products: matchedProducts.map(p => ({
             _id: p._id,
