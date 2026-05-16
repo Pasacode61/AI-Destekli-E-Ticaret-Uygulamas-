@@ -17,10 +17,11 @@ export const addOrderItems = async (req, res) => {
         if (!product) {
           return res.status(404).json({ message: `${item.isim} bulunamadı` });
         }
-        if (product.stokSayisi < item.miktar) {
+        const miktar = item.miktar || item.adet || 1;
+        if (product.stokSayisi < miktar) {
           return res.status(400).json({ message: `${product.isim} için yeterli stok yok. Kalan stok: ${product.stokSayisi}` });
         }
-        product.stokSayisi -= item.miktar;
+        product.stokSayisi -= miktar;
         await product.save();
       }
 

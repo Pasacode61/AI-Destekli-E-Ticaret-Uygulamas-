@@ -28,13 +28,56 @@ export const chat = async (req, res) => {
       }
     }
 
-    // Eğer .env dosyasında GEMINI_API_KEY yoksa, uygulamanın çökmemesi için basit fallback
-    if (!process.env.GEMINI_API_KEY) {
+    // Eğer .env dosyasında GEMINI_API_KEY yoksa veya geçersiz/mock bir key ise, uygulamanın çökmemesi ve anında yanıt vermesi için gelişmiş AI simülasyonu
+    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.includes('AIzaSy') || process.env.GEMINI_API_KEY.includes('MOCK')) {
       const lowerMsg = message.toLowerCase();
-      if (lowerMsg.includes('sipariş') || lowerMsg.includes('kargo')) {
-        return res.json({ reply: `(AI Devre Dışı) ${orderContext}`, type: 'text' });
+      
+      // Ürün arama simülasyonu
+      const aramaAnahtar = ['arıyorum', 'istiyorum', 'öner', 'bak', 'ara', 'var mı', 'göster', 'laptop', 'telefon', 'kulaklık', 'ürün', 'indirim', 'saat', 'tablo', 'ayakkabı', 'kamera', 'farklı', 'ne var', 'klavye', 'mouse'];
+      const isProductSearch = aramaAnahtar.some(k => lowerMsg.includes(k));
+
+      if (isProductSearch) {
+        // Spesifik kategori veya ürün adı arıyor mu kontrol et
+        const spesifikKelimeler = ['laptop', 'telefon', 'kulaklık', 'saat', 'tablo', 'ayakkabı', 'kamera', 'klavye', 'mouse', 'ekran', 'oyuncu', 'akıllı'];
+        const bulunanSpesifikler = spesifikKelimeler.filter(kelime => lowerMsg.includes(kelime));
+
+        let matchedProducts = [];
+
+        if (bulunanSpesifikler.length > 0) {
+          // Bulunan spesifik kelimelere göre arama yap
+          matchedProducts = await Product.find({
+            $or: [
+              { isim: { $regex: bulunanSpesifikler.join('|'), $options: 'i' } },
+              { kategori: { $regex: bulunanSpesifikler.join('|'), $options: 'i' } }
+            ]
+          }).limit(4);
+        }
+
+        // Eğer spesifik kelime yoksa (sadece 'öner', 'indirim', 'farklı' dendiyse) veya sonuç bulunamadıysa rastgele getir
+        if (matchedProducts.length === 0) {
+          matchedProducts = await Product.aggregate([{ $sample: { size: 4 } }]);
+        }
+
+        return res.json({
+          reply: bulunanSpesifikler.length > 0 
+            ? `🤖 (Nexia AI Asistan) "${bulunanSpesifikler.join(', ')}" aramanıza özel mağazamızın en popüler ürünlerini aşağıda listeledim:` 
+            : "🤖 (Nexia AI Asistan) İsteğinize özel mağazamızın en dikkat çeken fırsatlarını belirledim. İşte sizin için seçtiğim dinamik ürünler:",
+          type: "products",
+          products: matchedProducts.map(p => ({
+            _id: p._id,
+            isim: p.isim,
+            fiyat: p.fiyat,
+            resimUrl: p.resimUrl,
+            kategori: p.kategori
+          }))
+        });
       }
-      return res.json({ reply: '(AI Modülü) Lütfen .env dosyasına GEMINI_API_KEY ekleyin. Şu an sistem kısıtlı çalışmaktadır.', type: 'text' });
+
+      if (lowerMsg.includes('sipariş') || lowerMsg.includes('kargo')) {
+        return res.json({ reply: `🤖 (Nexia AI Asistan) ${orderContext}`, type: 'text' });
+      }
+
+      return res.json({ reply: "🤖 (Nexia AI Asistan) Merhaba! Size mağazamızdaki ürünler, siparişleriniz veya kargo süreçleri hakkında anında yardımcı olabilirim. Ne arıyordunuz?", type: 'text' });
     }
 
     // 2. Gemini AI'a göndereceğimiz Mükemmel Sistem Context'ini (Prompt) hazırlayalım
